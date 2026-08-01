@@ -10,7 +10,7 @@ require "spec_helper"
 RSpec.configure do |config|
   config.use_transactional_fixtures = true
   config.infer_spec_type_from_file_location!
-  config.before(file_path: %r{\A\./spec/[^/]+/}) do
+  config.before do
     EasyAccessControl.configure do |c|
       c.subject_class = "Employee"
       c.scope_class = "Warehouse"

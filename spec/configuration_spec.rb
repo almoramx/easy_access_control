@@ -2,6 +2,7 @@ require "spec_helper"
 
 RSpec.describe EasyAccessControl do
   it "defaults admin_method, global_modules, role_names, current_scope" do
+    described_class.reset_config!
     config = described_class.config
     expect(config.admin_method).to eq(:is_administrator?)
     expect(config.global_modules).to eq([])
@@ -27,6 +28,7 @@ RSpec.describe EasyAccessControl do
   end
 
   it "reports scoped? from scope_class presence" do
+    described_class.reset_config!
     expect(described_class.scoped?).to be false
     described_class.configure { |c| c.scope_class = "Warehouse" }
     expect(described_class.scoped?).to be true
