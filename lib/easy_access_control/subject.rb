@@ -33,6 +33,21 @@ module EasyAccessControl
       role_assignments.find_by(scope_id: scope&.id)&.role
     end
 
+    def toggle_override!(permission:, scope: nil)
+      unless permission.is_a?(EasyAccessControl::Permission)
+        permission = EasyAccessControl::Permission.find_by!(key: permission.to_s)
+      end
+      existing = permission_overrides.find_by(permission_id: permission.id, scope_id: scope&.id)
+      if existing
+        existing.destroy!
+        return nil
+      end
+      default_on = role_at(scope)&.permissions&.exists?(id: permission.id) || false
+      permission_overrides.create!(
+        permission_id: permission.id, scope_id: scope&.id, effect: default_on ? :deny : :grant
+      )
+    end
+
     private
 
     def global_grant?(key)
