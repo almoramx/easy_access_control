@@ -29,6 +29,12 @@ RSpec.describe EasyAccessControl::Subject do
     expect(employee.can?("orders.list")).to be false
   end
 
+  it "denies scoped keys without a scope even when a null-scope assignment grants them" do
+    EasyAccessControl::RolePermission.create!(role: seller, permission: orders_list)
+    assign(employee, seller, nil)
+    expect(employee.can?("orders.list")).to be false
+  end
+
   it "grants via role default at the assigned scope only" do
     EasyAccessControl::RolePermission.create!(role: seller, permission: orders_list)
     assign(employee, seller, store_a)
