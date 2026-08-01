@@ -1,6 +1,6 @@
 module EasyAccessControl
   class Sync
-    AUTHORIZE_PATTERN = /\bauthorize!\s*\(\s*["']([a-z0-9_.]+)["']/
+    AUTHORIZE_PATTERN = /\bauthorize!\s*\(\s*["']([a-z0-9_]+\.[a-z0-9_]+)["']/
 
     class << self
       def expected_keys(root: Rails.root)
@@ -8,8 +8,10 @@ module EasyAccessControl
       end
 
       def run!(root: Rails.root)
-        expected_keys(root:).each do |key|
-          Permission.find_or_create_by!(key:)
+        Permission.transaction do
+          expected_keys(root:).each do |key|
+            Permission.find_or_create_by!(key:)
+          end
         end
       end
 

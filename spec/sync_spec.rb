@@ -37,4 +37,21 @@ RSpec.describe EasyAccessControl::Sync do
     described_class.run!
     expect { described_class.run! }.not_to change(EasyAccessControl::Permission, :count)
   end
+
+  it "ignores authorize! keys that do not match the module.action format" do
+    dir = Rails.root.join("app", "tmp_scan")
+    FileUtils.mkdir_p(dir)
+    File.write(dir.join("bad_keys.rb"), 'authorize!("a.b.c") ; authorize!("orders.export")')
+    keys = described_class.scanned_keys(Rails.root)
+    expect(keys).to include("orders.export")
+    expect(keys).not_to include("a.b.c", "b.c")
+  ensure
+    FileUtils.rm_rf(dir)
+  end
+
+  it "persists nothing when any expected key is invalid" do
+    allow(described_class).to receive(:expected_keys).and_return(["orders.list", "bad key"])
+    expect { described_class.run! }.to raise_error(ActiveRecord::RecordInvalid)
+    expect(EasyAccessControl::Permission.count).to eq(0)
+  end
 end
