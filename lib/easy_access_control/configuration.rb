@@ -1,0 +1,15 @@
+module EasyAccessControl
+  class Configuration
+    attr_accessor :subject_class, :scope_class, :admin_method, :global_modules,
+                  :role_names, :current_scope
+
+    def initialize
+      @subject_class = nil
+      @scope_class = nil
+      @admin_method = :is_administrator?
+      @global_modules = []
+      @role_names = []
+      @current_scope = -> { nil }
+    end
+  end
+end
