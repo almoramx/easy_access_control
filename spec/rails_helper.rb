@@ -2,7 +2,7 @@ ENV["RAILS_ENV"] ||= "test"
 require "combustion"
 require "easy_access_control/engine"
 
-Combustion.initialize! :active_record, :action_controller
+Combustion.initialize! :active_record, :action_controller, database_migrate: false
 
 require "rspec/rails"
 require "spec_helper"
