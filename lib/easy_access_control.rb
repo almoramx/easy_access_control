@@ -6,6 +6,7 @@ require "easy_access_control/context"
 require "easy_access_control/policy"
 require "easy_access_control/controller"
 require "easy_access_control/resolved_access"
+require "easy_access_control/sync"
 
 module EasyAccessControl
   class << self
