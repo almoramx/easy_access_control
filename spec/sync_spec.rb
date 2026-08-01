@@ -49,6 +49,16 @@ RSpec.describe EasyAccessControl::Sync do
     FileUtils.rm_rf(dir)
   end
 
+  it "scans paren-less authorize! calls" do
+    dir = Rails.root.join("app", "tmp_scan")
+    FileUtils.mkdir_p(dir)
+    File.write(dir.join("parenless.rb"), 'authorize! "orders.parenless"')
+    keys = described_class.scanned_keys(Rails.root)
+    expect(keys).to include("orders.parenless")
+  ensure
+    FileUtils.rm_rf(dir)
+  end
+
   it "persists nothing when any expected key is invalid" do
     allow(described_class).to receive(:expected_keys).and_return(["orders.list", "bad key"])
     expect { described_class.run! }.to raise_error(ActiveRecord::RecordInvalid)

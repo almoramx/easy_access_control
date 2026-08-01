@@ -40,4 +40,15 @@ RSpec.describe "Subject#toggle_override!" do
     expect { employee.toggle_override!(permission: "nope.nope", scope: store) }
       .to raise_error(ActiveRecord::RecordNotFound)
   end
+
+  it "raises when toggling a global permission" do
+    global_permission = EasyAccessControl::Permission.create!(key: "config.edit")
+    expect { employee.toggle_override!(permission: global_permission, scope: store) }
+      .to raise_error(ArgumentError)
+  end
+
+  it "raises when scope is nil and EasyAccessControl.scoped? is true" do
+    expect { employee.toggle_override!(permission:, scope: nil) }
+      .to raise_error(ArgumentError)
+  end
 end

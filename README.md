@@ -24,6 +24,23 @@ The install task copies `create_easy_access_control_tables` into your app's `db/
 creating `permissions`, `roles`, `role_permissions`, `role_assignments`, `permission_overrides`,
 and `global_permissions`.
 
+### Existing tables (brownfield)
+
+If your app already has tables named `permissions`, `roles`, `role_permissions`,
+`role_assignments`, `permission_overrides`, or `global_permissions` — with production data —
+skip `easy_access_control:install:migrations`; running it will attempt a `create_table` that
+collides with what you already have.
+
+Instead, write your own migration that renames your existing subject/scope columns on
+`role_assignments`, `permission_overrides`, and `global_permissions` to `subject_id`/`scope_id`
+(e.g. `employee_id` → `subject_id`, `warehouse_id` → `scope_id`), since the gem's models query
+those column names unconditionally.
+
+Then diff your schema against the gem's
+`db/migrate/20260801000001_create_easy_access_control_tables.rb`, in particular the `permissions`
+table's `module_name` column and the unique indexes on `role_permissions`, `role_assignments`,
+`permission_overrides`, and `global_permissions`, and add whatever is missing.
+
 ## Configuration
 
 ```ruby
@@ -85,6 +102,12 @@ override yet, it creates one with the opposite effect of the role's default (`gr
 doesn't already grant it, `deny` if it does); calling it again removes the override. It accepts
 either a `Permission` record or a key string, and returns the created override (or `nil` when it
 just destroyed one).
+
+It raises `ArgumentError` for two inputs `can?` would never consult, so admin UIs don't persist
+dead rows that look like they toggled something: a global-module permission (`can?` resolves
+those via `global_permissions`, never overrides), and `scope: nil` while
+`EasyAccessControl.scoped?` is true (the deny gate in `can?` makes nil-scope overrides
+unreachable in scoped mode).
 
 ## Controller integration
 
@@ -235,6 +258,7 @@ not carry over to another; it expects `subject_with_role`, `granted_key`, `assig
    including pure-domain methods that never consult `can?` at all, and regardless of which key
    (if any) the method's own `can?` calls actually use. `export?` above still produces an
    `orders.export` permission row, even though it calls `can?(:list)`, not `can?(:export)`.
-5. `Sync::AUTHORIZE_PATTERN` only matches `authorize!` calls with a single-dot literal string key
-   (`authorize!("orders.list")`). Dynamic or interpolated keys (`authorize!("orders.#{action}")`,
-   a key built from a variable) are invisible to `sync`/`check`/`prune`.
+5. `Sync::AUTHORIZE_PATTERN` only matches `authorize!` calls with a single-dot literal string key,
+   parens optional (`authorize!("orders.list")` and `authorize! "orders.list"` both match).
+   Dynamic or interpolated keys (`authorize!("orders.#{action}")`, a key built from a constant or
+   variable) are invisible to `sync`/`check`/`prune`.

@@ -37,6 +37,8 @@ module EasyAccessControl
       unless permission.is_a?(EasyAccessControl::Permission)
         permission = EasyAccessControl::Permission.find_by!(key: permission.to_s)
       end
+      raise ArgumentError, "#{permission.key} is a global permission" if permission.global?
+      raise ArgumentError, "scope is required when scoped" if scope.nil? && EasyAccessControl.scoped?
       existing = permission_overrides.find_by(permission_id: permission.id, scope_id: scope&.id)
       if existing
         existing.destroy!

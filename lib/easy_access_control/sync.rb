@@ -1,6 +1,6 @@
 module EasyAccessControl
   class Sync
-    AUTHORIZE_PATTERN = /\bauthorize!\s*\(\s*["']([a-z0-9_]+\.[a-z0-9_]+)["']/
+    AUTHORIZE_PATTERN = /\bauthorize!\s*\(?\s*["']([a-z0-9_]+\.[a-z0-9_]+)["']/
 
     class << self
       def expected_keys(root: Rails.root)
