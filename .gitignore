@@ -2,3 +2,5 @@ Gemfile.lock
 spec/internal/db/*.sqlite
 spec/internal/log/*.log
 spec/internal/tmp/
+mise.toml
+.ruby-version
