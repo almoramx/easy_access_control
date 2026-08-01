@@ -4,7 +4,7 @@ module EasyAccessControl
 
     def initialize(subject, scope: nil)
       @subject = subject
-      @scope = scope
+      @scope = scope || EasyAccessControl.current_scope
     end
 
     def states
@@ -22,6 +22,7 @@ module EasyAccessControl
       if permission.global?
         return PermState.new(permission:, on: global_ids.include?(permission.id), source: :global)
       end
+      return PermState.new(permission:, on: false, source: :role) if EasyAccessControl.scoped? && @scope.nil?
       override = overrides[permission.id]
       if override
         return PermState.new(permission:, on: override.grant?, source: override.effect.to_sym)

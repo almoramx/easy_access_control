@@ -55,4 +55,19 @@ RSpec.describe EasyAccessControl::ResolvedAccess do
     expect(states.size).to eq(3)
     expect(queries).to be <= 6
   end
+
+  it "shows scoped permissions off when scoped mode is on and no scope resolves" do
+    scoped_employee = Employee.create!(name: "Bob")
+    EasyAccessControl::RoleAssignment.create!(subject_id: scoped_employee.id, role: seller, scope_id: nil)
+    states = described_class.new(scoped_employee).states
+    expect(state_for(states, orders_list)).to have_attributes(on: false, source: :role)
+  end
+
+  it "falls back to the configured current_scope provider" do
+    scoped_employee = Employee.create!(name: "Charlie")
+    EasyAccessControl::RoleAssignment.create!(subject_id: scoped_employee.id, role: seller, scope_id: store.id)
+    EasyAccessControl.config.current_scope = -> { store }
+    states = described_class.new(scoped_employee).states
+    expect(state_for(states, orders_list)).to have_attributes(on: true, source: :role)
+  end
 end
