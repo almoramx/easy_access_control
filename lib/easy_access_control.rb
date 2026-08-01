@@ -4,6 +4,7 @@ require "easy_access_control/configuration"
 require "easy_access_control/subject"
 require "easy_access_control/context"
 require "easy_access_control/policy"
+require "easy_access_control/controller"
 
 module EasyAccessControl
   class << self
