@@ -2,6 +2,8 @@ require "pundit"
 require "easy_access_control/version"
 require "easy_access_control/configuration"
 require "easy_access_control/subject"
+require "easy_access_control/context"
+require "easy_access_control/policy"
 
 module EasyAccessControl
   class << self
