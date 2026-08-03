@@ -22,7 +22,8 @@ module EasyAccessControl
       target = scope || EasyAccessControl.current_scope
       return false if EasyAccessControl.scoped? && target.nil?
       override = permission_overrides.joins(:permission)
-                                     .find_by(permissions: { key: key }, scope_id: target&.id)
+                                     .merge(EasyAccessControl::Permission.where(key: key))
+                                     .find_by(scope_id: target&.id)
       return override.grant? if override
       role = role_at(target)
       return false unless role
@@ -53,7 +54,8 @@ module EasyAccessControl
     private
 
     def global_grant?(key)
-      global_permissions.joins(:permission).exists?(permissions: { key: key })
+      global_permissions.joins(:permission)
+                        .merge(EasyAccessControl::Permission.where(key: key)).exists?
     end
   end
 end

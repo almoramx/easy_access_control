@@ -21,22 +21,29 @@ $ bin/rails db:migrate
 ```
 
 The install task copies `create_easy_access_control_tables` into your app's `db/migrate`,
-creating `permissions`, `roles`, `role_permissions`, `role_assignments`, `permission_overrides`,
-and `global_permissions`.
+creating `easy_access_control_permissions`, `easy_access_control_roles`,
+`easy_access_control_role_permissions`, `easy_access_control_role_assignments`,
+`easy_access_control_permission_overrides`, and `easy_access_control_global_permissions`.
+
+All gem tables share the `table_prefix` configured below (default `"easy_access_control_"`),
+so they never collide with your app's own `permissions` or `roles` tables. Set the prefix
+*before* running the install migration — it reads the config.
 
 ### Existing tables (brownfield)
 
-If your app already has tables named `permissions`, `roles`, `role_permissions`,
-`role_assignments`, `permission_overrides`, or `global_permissions` — with production data —
-skip `easy_access_control:install:migrations`; running it will attempt a `create_table` that
-collides with what you already have.
+If your app already has the gem's tables *without* the prefix (installs prior to v0.2.0), set
 
-Instead, write your own migration that renames your existing subject/scope columns on
+```ruby
+config.table_prefix = ""
+```
+
+and skip `easy_access_control:install:migrations` — nothing else changes.
+
+If your app has its own home-grown `permissions`/`roles` tables you want the gem to take over,
+write your own migration that renames your existing subject/scope columns on
 `role_assignments`, `permission_overrides`, and `global_permissions` to `subject_id`/`scope_id`
 (e.g. `employee_id` → `subject_id`, `warehouse_id` → `scope_id`), since the gem's models query
-those column names unconditionally.
-
-Then diff your schema against the gem's
+those column names unconditionally. Then diff your schema against the gem's
 `db/migrate/20260801000001_create_easy_access_control_tables.rb`, in particular the `permissions`
 table's `module_name` column and the unique indexes on `role_permissions`, `role_assignments`,
 `permission_overrides`, and `global_permissions`, and add whatever is missing.
@@ -68,6 +75,9 @@ end
   Leave empty to allow any role name.
 - `current_scope` — a zero-arg lambda used as the fallback scope wherever a scope isn't passed
   explicitly (`Subject#can?`, `ResolvedAccess.new`). Defaults to `-> { nil }`.
+- `table_prefix` — prefix for every gem table name. Defaults to `"easy_access_control_"`.
+  Set it to `""` for pre-v0.2.0 installs whose tables are unprefixed. Must be set before any
+  gem model is loaded (an initializer is early enough).
 
 ## Subject
 

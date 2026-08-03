@@ -14,6 +14,10 @@ module EasyAccessControl
       @config ||= Configuration.new
     end
 
+    def table_name_prefix
+      config.table_prefix
+    end
+
     def configure
       yield config
     end

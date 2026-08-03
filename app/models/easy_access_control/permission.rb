@@ -1,7 +1,5 @@
 module EasyAccessControl
   class Permission < ActiveRecord::Base
-    self.table_name = "permissions"
-
     KEY_FORMAT = /\A[a-z0-9_]+\.[a-z0-9_]+\z/
 
     has_many :role_permissions, class_name: "EasyAccessControl::RolePermission", dependent: :destroy

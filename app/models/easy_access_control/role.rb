@@ -1,7 +1,5 @@
 module EasyAccessControl
   class Role < ActiveRecord::Base
-    self.table_name = "roles"
-
     has_many :role_permissions, class_name: "EasyAccessControl::RolePermission", dependent: :destroy
     has_many :permissions, through: :role_permissions
 
