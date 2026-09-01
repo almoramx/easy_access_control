@@ -119,6 +119,21 @@ those via `global_permissions`, never overrides), and `scope: nil` while
 `EasyAccessControl.scoped?` is true (the deny gate in `can?` makes nil-scope overrides
 unreachable in scoped mode).
 
+### Role stamping
+
+```ruby
+user.apply_role!(role, scope: warehouse)
+```
+
+`apply_role!` is the template alternative to live role assignment: it makes the subject's
+access match the role **exactly, once**, with no ongoing link — editing the role later changes
+nobody already stamped. At the given scope it removes any `role_assignment` and every
+`permission_override`, then grants the role's scoped permissions as `grant` overrides; the
+subject's `global_permissions` are replaced by the role's global-module permissions (note:
+globals are subject-wide, so the last stamp wins across scopes). Like `toggle_override!`, it
+raises `ArgumentError` when `scope` is nil in scoped mode. Roles can hold global-module
+permissions for exactly this purpose; the live `can?` role path simply never consults them.
+
 ## Controller integration
 
 ```ruby

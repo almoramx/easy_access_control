@@ -51,6 +51,26 @@ module EasyAccessControl
       )
     end
 
+    # Stamp mode: makes the subject's access match the role exactly, with no
+    # live link — editing the role later changes nobody already stamped.
+    # At the given scope it clears any role assignment and every override,
+    # then grants the role's scoped permissions as overrides; the subject's
+    # global permissions are replaced by the role's global ones.
+    def apply_role!(role, scope: nil)
+      raise ArgumentError, "scope is required when scoped" if scope.nil? && EasyAccessControl.scoped?
+      scoped_perms, global_perms = role.permissions.partition { |permission| !permission.global? }
+      self.class.transaction do
+        role_assignments.where(scope_id: scope&.id).destroy_all
+        permission_overrides.where(scope_id: scope&.id).destroy_all
+        scoped_perms.each do |permission|
+          permission_overrides.create!(permission_id: permission.id, scope_id: scope&.id, effect: :grant)
+        end
+        global_permissions.destroy_all
+        global_perms.each { |permission| global_permissions.create!(permission_id: permission.id) }
+      end
+      self
+    end
+
     private
 
     def global_grant?(key)
