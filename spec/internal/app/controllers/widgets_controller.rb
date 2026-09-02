@@ -23,6 +23,15 @@ class WidgetsController < ActionController::Base
     head :ok
   end
 
+  def panel
+    authorize!("widgets.list")
+    render inline: <<~ERB
+      <%= eac_debug_toolbar %>
+      <%= permitted("widgets.edit") do %><button>Edit</button><% end %>
+      <%= permitted("widgets.delete") do %><button>Delete</button><% end %>
+    ERB
+  end
+
   private
 
   def pundit_user

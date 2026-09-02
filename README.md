@@ -176,6 +176,38 @@ and calls `skip_authorization` so `verify_authorized` is satisfied either way. `
 :verify_authorized` still fails the request if an action calls neither `authorize`/`authorize!`
 nor `skip_authorization`.
 
+`can?(key, scope: nil)` is also available (and exposed as a helper method): a boolean, scope
+defaulting to the `Context`'s, memoized per request so a view can ask per row without re-querying.
+
+## View gates and debug UI
+
+Markup that depends on a permission goes through `permitted`, never a bare `if can?`:
+
+```erb
+<%= permitted("orders.create", scope: @warehouse) do %>
+  <%= link_to "New order", new_order_path %>
+<% end %>
+```
+
+It renders the block only when the subject holds the key. Turn on debug mode and every gate is
+boxed with its key (`orders.create · Central`), denied ones in red with just the tag (the block
+is not rendered — it usually depends on data the action never loaded), and `eac_debug_toolbar`
+prints the keys the action demanded through `authorize!`:
+
+```ruby
+# config/initializers/easy_access_control.rb
+config.debug_ui = ->(controller) { Rails.env.development? && controller.session[:permissions_debug] }
+```
+
+```erb
+<%# app/views/layouts/application.html.erb %>
+<%= eac_debug_toolbar %>
+```
+
+The toolbar carries its own `<style>`; nothing to add to the asset pipeline. Keep a `can?`
+boolean only where a wrapping `<div>` is impossible (`<tr>`/`<td>`/`<th>` visibility) or the
+result feeds a component argument.
+
 ## Writing policies
 
 ```ruby
@@ -287,3 +319,6 @@ not carry over to another; it expects `subject_with_role`, `granted_key`, `assig
    parens optional (`authorize!("orders.list")` and `authorize! "orders.list"` both match).
    Dynamic or interpolated keys (`authorize!("orders.#{action}")`, a key built from a constant or
    variable) are invisible to `sync`/`check`/`prune`.
+6. `permitted` wraps its block in a block-level `<div>`: browsers foster-parent a `<div>` placed
+   directly inside `<table>`/`<tr>`, so permission-gated columns still use a `can?` boolean and
+   get no debug box.
