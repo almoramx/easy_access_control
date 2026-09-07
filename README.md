@@ -176,6 +176,46 @@ and calls `skip_authorization` so `verify_authorized` is satisfied either way. `
 :verify_authorized` still fails the request if an action calls neither `authorize`/`authorize!`
 nor `skip_authorization`.
 
+`can?(key, scope: nil)` is also available (and exposed as a helper method): a boolean, scope
+defaulting to the `Context`'s, memoized per request so a view can ask per row without re-querying.
+
+## View gates and debug UI
+
+Markup that depends on a permission goes through `permitted`, never a bare `if can?`:
+
+```erb
+<%= permitted("orders.create", scope: @warehouse) do %>
+  <%= link_to "New order", new_order_path %>
+<% end %>
+```
+
+It renders the block only when the subject holds the key. Turn on debug mode and every gate is
+boxed with its key (`orders.create · Central`), denied ones in red with just the tag (the block
+is not rendered — it usually depends on data the action never loaded), and `eac_debug_toolbar`
+prints the keys the action demanded through `authorize!`:
+
+```ruby
+# config/initializers/easy_access_control.rb
+config.debug_ui = ->(controller) { Rails.env.development? && controller.session[:permissions_debug] }
+```
+
+```erb
+<%# app/views/layouts/application.html.erb %>
+<%= eac_debug_toolbar %>
+```
+
+Where a wrapping `<div>` is impossible — a permission-gated table column — make the gate the
+element itself with `as:`; extra attributes pass through and, in debug, the cell gets the key as a
+corner label and `title` tooltip instead of a wrapper:
+
+```erb
+<%= permitted("orders.costs", scope: @warehouse, as: :th, class: "text-right") { "Cost" } %>
+<%= permitted("orders.costs", scope: @warehouse, as: :td, class: "text-right") { money(line.cost) } %>
+```
+
+The toolbar carries its own `<style>`; nothing to add to the asset pipeline. Keep a `can?`
+boolean only where the result feeds a component argument (a `colspan`, an empty-state subtitle).
+
 ## Writing policies
 
 ```ruby
@@ -287,3 +327,7 @@ not carry over to another; it expects `subject_with_role`, `granted_key`, `assig
    parens optional (`authorize!("orders.list")` and `authorize! "orders.list"` both match).
    Dynamic or interpolated keys (`authorize!("orders.#{action}")`, a key built from a constant or
    variable) are invisible to `sync`/`check`/`prune`.
+6. `permitted` without `as:` wraps its block in a block-level `<div>`: browsers foster-parent a
+   `<div>` placed directly inside `<table>`/`<tr>`, so gated cells must use `as: :th`/`as: :td`.
+   Slot calls (`component.with_x do … end`) can't be boxed either — put `permitted` inside the
+   slot block, not around the slot.
