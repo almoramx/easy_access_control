@@ -5,28 +5,33 @@ module EasyAccessControl
 
     included do
       if respond_to?(:helper_method)
-        helper_method :can?, :eac_debug?, :eac_required_permissions
+        helper_method :can?, :eac_debug?, :eac_required_permissions, :eac_scope_for
         helper EasyAccessControl::ViewHelper
       end
     end
 
     def authorize!(key, scope: nil)
-      scope ||= Context.unwrap(pundit_user).last
+      scope = eac_scope_for(key, scope)
       eac_required_permissions << [key.to_s, scope]
       raise Pundit::NotAuthorizedError, query: key unless can?(key, scope: scope)
       skip_authorization
       true
     end
 
-    # Scope defaults to the pundit_user Context's. Memoized per request:
-    # views ask the same key many times (one per row).
+    # Memoized per request: views ask the same key many times (one per row).
     def can?(key, scope: nil)
-      subject, context_scope = Context.unwrap(pundit_user)
-      scope ||= context_scope
+      scope = eac_scope_for(key, scope)
       cache = (@eac_can_cache ||= {})
       cache_key = [key.to_s, scope&.id]
       return cache[cache_key] if cache.key?(cache_key)
-      cache[cache_key] = !!subject&.can?(key, scope: scope)
+      cache[cache_key] = !!Context.unwrap(pundit_user).first&.can?(key, scope: scope)
+    end
+
+    # Effective scope of a check: none for global keys, else the given one or
+    # the pundit_user Context's.
+    def eac_scope_for(key, scope = nil)
+      return if EasyAccessControl.global_key?(key)
+      scope || Context.unwrap(pundit_user).last
     end
 
     def eac_debug?

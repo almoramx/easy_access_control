@@ -204,9 +204,17 @@ config.debug_ui = ->(controller) { Rails.env.development? && controller.session[
 <%= eac_debug_toolbar %>
 ```
 
+Where a wrapping `<div>` is impossible — a permission-gated table column — make the gate the
+element itself with `as:`; extra attributes pass through and, in debug, the cell gets the key as a
+corner label and `title` tooltip instead of a wrapper:
+
+```erb
+<%= permitted("orders.costs", scope: @warehouse, as: :th, class: "text-right") { "Cost" } %>
+<%= permitted("orders.costs", scope: @warehouse, as: :td, class: "text-right") { money(line.cost) } %>
+```
+
 The toolbar carries its own `<style>`; nothing to add to the asset pipeline. Keep a `can?`
-boolean only where a wrapping `<div>` is impossible (`<tr>`/`<td>`/`<th>` visibility) or the
-result feeds a component argument.
+boolean only where the result feeds a component argument (a `colspan`, an empty-state subtitle).
 
 ## Writing policies
 
@@ -319,6 +327,7 @@ not carry over to another; it expects `subject_with_role`, `granted_key`, `assig
    parens optional (`authorize!("orders.list")` and `authorize! "orders.list"` both match).
    Dynamic or interpolated keys (`authorize!("orders.#{action}")`, a key built from a constant or
    variable) are invisible to `sync`/`check`/`prune`.
-6. `permitted` wraps its block in a block-level `<div>`: browsers foster-parent a `<div>` placed
-   directly inside `<table>`/`<tr>`, so permission-gated columns still use a `can?` boolean and
-   get no debug box.
+6. `permitted` without `as:` wraps its block in a block-level `<div>`: browsers foster-parent a
+   `<div>` placed directly inside `<table>`/`<tr>`, so gated cells must use `as: :th`/`as: :td`.
+   Slot calls (`component.with_x do … end`) can't be boxed either — put `permitted` inside the
+   slot block, not around the slot.
