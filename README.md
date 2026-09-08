@@ -206,7 +206,8 @@ config.debug_ui = ->(controller) { Rails.env.development? && controller.session[
 
 Where a wrapping `<div>` is impossible — a permission-gated table column — make the gate the
 element itself with `as:`; extra attributes pass through and, in debug, the cell gets the key as a
-corner label and `title` tooltip instead of a wrapper:
+corner label and `title` tooltip instead of a wrapper. A denied cell is omitted, except in debug,
+where it renders empty and red so the missing key stays visible:
 
 ```erb
 <%= permitted("orders.costs", scope: @warehouse, as: :th, class: "text-right") { "Cost" } %>

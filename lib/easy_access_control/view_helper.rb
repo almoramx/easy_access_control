@@ -12,27 +12,30 @@ module EasyAccessControl
       .eac-debug-banner b{color:#93c5fd}
       .eac-debug-cell{position:relative;outline:1px dashed #007bff;outline-offset:-1px}
       .eac-debug-cell::after{content:attr(data-eac-key);position:absolute;top:0;right:0;font:9px/1.3 ui-monospace,monospace;color:#fff;background:#007bff;padding:0 3px;border-radius:0 0 0 2px;pointer-events:none}
+      .eac-debug-cell[data-eac-allowed="false"]{outline-color:#dc3545;min-width:1.5em}
+      .eac-debug-cell[data-eac-allowed="false"]::after{background:#dc3545}
     CSS
 
     # Without `as:` the block is wrapped in a block-level div — never put that
     # directly inside <table>/<tr> (browsers foster-parent it). With `as:` the
     # gate IS the element (`as: :th`, `as: :td`, extra attrs pass through): it
     # renders only when allowed and, in debug, carries the key as a corner
-    # label + title tooltip instead of a wrapper.
+    # label + title tooltip instead of a wrapper; a denied cell shows up in
+    # debug as an empty red cell so the missing key is visible.
     def permitted(key, scope: nil, as: nil, **attrs, &block)
       allowed = can?(key, scope: scope)
       label = [key, eac_scope_label(eac_scope_for(key, scope))].compact.join(" · ")
+      label += " ✗" unless allowed
       if as
-        return unless allowed
+        return unless allowed || eac_debug?
         if eac_debug?
           attrs = attrs.merge(title: label, class: [attrs[:class], "eac-debug-cell"].compact.join(" "),
-                              data: (attrs[:data] || {}).merge(eac_key: key))
+                              data: (attrs[:data] || {}).merge(eac_key: key, eac_allowed: allowed))
         end
-        return content_tag(as, block ? capture(&block) : nil, **attrs)
+        return content_tag(as, allowed && block ? capture(&block) : nil, **attrs)
       end
       content = allowed ? capture(&block) : nil
       return content unless eac_debug?
-      label += " ✗" unless allowed
       tag.div(class: "eac-debug", title: label, data: { eac_key: key, eac_allowed: allowed }) do
         safe_join([tag.span(label, class: "eac-debug-tag"), content])
       end
