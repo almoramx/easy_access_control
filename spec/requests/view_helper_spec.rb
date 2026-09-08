@@ -28,8 +28,8 @@ RSpec.describe "permitted view helper", type: :request do
   it "marks `as:` cells with the key as attributes instead of a wrapper" do
     EasyAccessControl.config.debug_ui = ->(_) { true }
     get "/widgets/panel"
-    expect(response.body).to include('<th class="right eac-debug-cell" title="widgets.edit · A" data-eac-key="widgets.edit">Cost</th>')
-    expect(response.body).not_to include("<th></th>")
+    expect(response.body).to include('<th class="right eac-debug-cell" title="widgets.edit · A" data-eac-key="widgets.edit" data-eac-allowed="true">Cost</th>')
+    expect(response.body).to include('<th title="widgets.delete · A ✗" class="eac-debug-cell" data-eac-key="widgets.delete" data-eac-allowed="false"></th>')
   end
 
   it "boxes every gate with its key and lists authorize! keys when debug is on" do
