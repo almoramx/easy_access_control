@@ -305,6 +305,12 @@ The `"scope-isolated permissions"` shared example asserts that a role granted at
 not carry over to another; it expects `subject_with_role`, `granted_key`, `assigned_scope`, and
 `other_scope` to be defined in the including group.
 
+## Releasing
+
+Bump `EasyAccessControl::VERSION`, merge to `main`. CI tags `v<VERSION>` and publishes a GitHub
+release with generated notes once `rspec` passes; a version whose tag already exists is skipped.
+Apps consume the gem by tag (`gem "easy_access_control", git: ..., tag: "v0.4.1"`).
+
 ## Known ceilings
 
 1. Unique indexes do not fire for `NULL` `scope_id` (most databases treat every `NULL` as

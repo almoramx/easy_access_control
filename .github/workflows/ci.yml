@@ -15,3 +15,21 @@ jobs:
           ruby-version: .ruby-version
           bundler-cache: true
       - run: bundle exec rspec
+
+  release:
+    needs: rspec
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - run: |
+          version=$(grep -oP 'VERSION = "\K[^"]+' lib/easy_access_control/version.rb)
+          if git ls-remote --exit-code --tags origin "v$version" >/dev/null; then
+            echo "v$version ya existe, nada que publicar"
+            exit 0
+          fi
+          gh release create "v$version" --target "$GITHUB_SHA" --title "v$version" --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
